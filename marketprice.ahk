@@ -87,32 +87,36 @@ else {
 
 theme := 1
 ~+z::
-DllCall("QueryPerformanceCounter", "Int64*", CounterBefore)
+if(tasktime) {
+	DllCall("QueryPerformanceCounter", "Int64*", CounterBefore)
+}
 msg := ""
 msg2 := ""
 themecheck := 1
-ToolTip
+active := 0
+;ToolTip
 
 Loop {
 	WinGetPos, focusX, focusY, ClientWidth, ClientHeight, A
 	ImageSearch, FoundX, FoundY, focusX, focusY, focusX+ClientWidth, focusY+ClientHeight, img/%theme%.png
 	if (ErrorLevel == 0) {
 		PixelGetColor, color, FoundX, FoundY
-		BoundX := FoundX
+		BoundX := FoundX+140
 		loop {
 			if(BoundX < (focusX+ClientWidth))
 			{
 				PixelGetColor, colorbound, BoundX, FoundY
-				BoundX += 5
 				if(color != colorbound) {
 					xoffset := BoundX - FoundX - 5
 					break
+				}
+				else {
+					BoundX += 5
 				}
 			}
 			else {
 				break
 			}
-
 		}
 		PixelGetColor, color2, FoundX+(xoffset*0.5), FoundY+Ceil(xoffset/9)
 		if(color == color2) {
@@ -123,7 +127,7 @@ Loop {
 		}
 		
 		item := ClearItem(item)
-SearchLoop:
+		SearchLoop:
 		loop % itemsjson.payload.items.ru.length() {
 			itemtemp := itemsjson.payload.items.ru[A_Index].item_name
 			StringUpper itemtemp, itemtemp, U
@@ -183,17 +187,17 @@ SearchLoop:
 				}
 			}
 		}
-		Loop % vaulted.length()
-		{
-			if InStr(item, vaulted[A_Index]) {
-				vaultext := "Vaulted: Yes`n"
-				break
-			}
-			else { 
-				vaultext := "Vaulted: No`n"
-			}
-		}
 		if(showvaulted) {
+			Loop % vaulted.length()
+			{
+				if InStr(item, vaulted[A_Index]) {
+					vaultext := "Vaulted: Yes`n"
+					break
+				}
+				else { 
+					vaultext := "Vaulted: No`n"
+				}
+			}
 			msg := msg vaultext
 		}
 		break
@@ -208,7 +212,6 @@ SearchLoop:
 		}
 		else {
 			msg := "Текст не найден`n"
-
 			break
 		}
 	}
@@ -217,12 +220,12 @@ SearchLoop:
 		break
 	}
 }
+if(tasktime) {
+	DllCall("QueryPerformanceCounter", "Int64*", CounterAfter)
+	DllCall("QueryPerformanceFrequency", "Int64*", Frequency)
+	msg := msg "Время обработки " Ceil((CounterAfter - CounterBefore)*1000/Frequency) " ms"
+}
 
-DllCall("QueryPerformanceCounter", "Int64*", CounterAfter)
-DllCall("QueryPerformanceFrequency", "Int64*", Frequency)
-
-if(tasktime)
-msg := msg "Время обработки " Ceil((CounterAfter - CounterBefore)*1000/Frequency) " ms"
 TT:=TT("CloseButton Balloon OnClose=ExitApp",, msg2)
 TT.Font("s12")
 MouseGetPos, xpos, ypos
@@ -242,7 +245,6 @@ if(active)
 TT.Remove()
 active := 0
 return
-
 
 showitemname:
 Menu,Tray,Togglecheck, Item Name
